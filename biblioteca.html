@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Estante</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #16211B;
+    --surface: #1F2E24;
+    --surface-2: #26362B;
+    --wood: #5C3B22;
+    --wood-light: #7A4E2C;
+    --brass: #C9A227;
+    --brass-dim: #8C7220;
+    --paper: #EDE6D6;
+    --ink: #E8E4D9;
+    --muted: #8FA396;
+    --libro: #5B7C99;
+    --libro-d: #3E5A73;
+    --comic: #C9542C;
+    --comic-d: #9C3F20;
+    --manga: #8A4F7D;
+    --manga-d: #663A5D;
+    --danger: #B0463C;
+    --ok: #6E9B6B;
+    --radius: 6px;
+    --shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--bg);
+    background-image: radial-gradient(ellipse at top, rgba(255,255,255,0.03), transparent 60%);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height:100vh;
+  }
+  h1,h2,h3, .display{ font-family:'Fraunces', serif; }
+  ::selection{ background: var(--brass-dim); color:#111; }
+  :focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce){ *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; } }
+
+  button{ font-family:inherit; cursor:pointer; border:none; background:none; color:inherit; }
+  input, textarea, select{ font-family:inherit; }
+
+  /* ---------- Header ---------- */
+  header{
+    padding: 28px 32px 18px;
+    display:flex; align-items:flex-end; justify-content:space-between; gap:24px;
+    flex-wrap:wrap;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .brand{ display:flex; align-items:baseline; gap:12px; }
+  .brand h1{ font-size: 30px; font-weight:600; margin:0; letter-spacing:0.3px; }
+  .brand .tag{ color:var(--muted); font-size:13px; font-family:'JetBrains Mono',monospace; }
+  .ledger{
+    display:flex; gap:22px; font-family:'JetBrains Mono', monospace; font-size:12.5px; color:var(--muted);
+  }
+  .ledger b{ color:var(--paper); font-size:16px; display:block; font-weight:500; }
+  .ledger div{ text-align:right; border-right:1px solid rgba(255,255,255,0.08); padding-right:18px; }
+  .ledger div:last-child{ border-right:none; padding-right:0; }
+
+  /* ---------- Tabs ---------- */
+  nav.tabs{
+    display:flex; gap:4px; padding: 18px 32px 0;
+  }
+  nav.tabs button{
+    padding:10px 18px; font-size:14.5px; font-weight:500; color:var(--muted);
+    border-radius: 6px 6px 0 0; position:relative; transition: color .15s;
+  }
+  nav.tabs button .dot{ display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:8px; }
+  nav.tabs button.active{ color:var(--paper); background:var(--surface); }
+  nav.tabs button:hover{ color:var(--paper); }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar{
+    background:var(--surface); padding:14px 32px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  }
+  .chips{ display:flex; gap:6px; flex-wrap:wrap; }
+  .chip{
+    font-size:12.5px; padding:6px 12px; border-radius:20px; background:var(--surface-2); color:var(--muted);
+    border:1px solid transparent;
+  }
+  .chip.active{ background: rgba(201,162,39,0.15); color:var(--brass); border-color: var(--brass-dim); }
+  .toolbar select{
+    background:var(--surface-2); color:var(--ink); border:1px solid rgba(255,255,255,0.08); border-radius:6px;
+    padding:6px 10px; font-size:12.5px; margin-left:auto;
+  }
+  .add-btn{
+    background:var(--brass); color:#1b1608; font-weight:600; font-size:13.5px; padding:9px 16px;
+    border-radius:6px; display:flex; align-items:center; gap:6px;
+  }
+  .add-btn:hover{ background:#dbb52f; }
+
+  /* ---------- Shelf ---------- */
+  .shelf-wrap{ padding: 30px 32px 60px; }
+  .shelf{
+    display:flex; flex-wrap:wrap; align-items:flex-end; gap:6px;
+    padding: 0 0 22px 0;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0px, transparent 214px,
+      var(--wood) 214px, var(--wood-light) 220px, transparent 224px
+    );
+  }
+  .spine{
+    width:48px; border-radius:3px 3px 0 0;
+    display:flex; flex-direction:column; align-items:center;
+    padding: 10px 6px 12px;
+    box-shadow: inset -3px 0 6px rgba(0,0,0,0.25), inset 3px 0 6px rgba(255,255,255,0.06), var(--shadow);
+    position:relative; transition: transform .15s ease;
+  }
+  .spine:hover{ transform: translateY(-6px); }
+  .spine .band{ width:100%; height:3px; background:rgba(255,255,255,0.35); margin-bottom:8px; border-radius:2px; }
+  .spine .band.bottom{ margin-bottom:0; margin-top:8px; }
+  .spine .title{
+    writing-mode: vertical-rl; transform:rotate(180deg);
+    font-family:'Fraunces', serif; font-weight:600; font-size:13px; line-height:1.25;
+    flex:1; text-align:center; color:rgba(255,255,255,0.95);
+    overflow:hidden; display:flex; align-items:center; justify-content:center;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+  .spine .status-mark{
+    position:absolute; top:-8px; right:-4px; width:16px; height:16px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:10px; box-shadow:0 2px 4px rgba(0,0,0,0.4);
+  }
+  .spine.libro{ background: linear-gradient(100deg, var(--libro), var(--libro-d)); }
+  .spine.comic{ background: linear-gradient(100deg, var(--comic), var(--comic-d)); }
+  .spine.manga{ background: linear-gradient(100deg, var(--manga), var(--manga-d)); }
+  .spine.abandonado{ filter: saturate(0.35) brightness(0.75); }
+
+  .empty-shelf{
+    width:100%; text-align:center; padding: 60px 20px; color:var(--muted);
+  }
+  .empty-shelf .display{ font-size:20px; color:var(--paper); margin-bottom:8px; }
+  .empty-shelf button{
+    margin-top:16px; background:var(--surface-2); color:var(--paper); padding:9px 18px; border-radius:6px;
+    border:1px solid rgba(255,255,255,0.1); font-size:13.5px;
+  }
+  .empty-shelf button:hover{ border-color: var(--brass); color:var(--brass); }
+
+  /* ---------- Modal shared ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(8,10,8,0.72); backdrop-filter: blur(2px);
+    display:flex; align-items:center; justify-content:center; z-index:50; padding:20px;
+  }
+  .modal{
+    background:var(--surface); border-radius:10px; max-width:560px; width:100%; max-height:88vh; overflow-y:auto;
+    box-shadow: var(--shadow); border:1px solid rgba(255,255,255,0.06);
+  }
+  .modal-head{
+    display:flex; align-items:center; justify-content:space-between; padding:18px 22px;
+    border-bottom:1px solid rgba(255,255,255,0.06); position:sticky; top:0; background:var(--surface); z-index:2;
+  }
+  .modal-head h2{ font-size:19px; margin:0; }
+  .modal-head button{ font-size:20px; color:var(--muted); line-height:1; padding:4px; }
+  .modal-head button:hover{ color:var(--paper); }
+  .modal-body{ padding: 20px 22px 26px; }
+
+  /* ---------- Search modal ---------- */
+  .cat-picker{ display:flex; gap:8px; margin-bottom:16px; }
+  .cat-picker button{
+    flex:1; padding:9px; border-radius:6px; font-size:13px; font-weight:500; background:var(--surface-2); color:var(--muted);
+    border:1px solid transparent;
+  }
+  .cat-picker button.active.libro{ border-color:var(--libro); color:var(--libro); background:rgba(91,124,153,0.12); }
+  .cat-picker button.active.comic{ border-color:var(--comic); color:var(--comic); background:rgba(201,84,44,0.12); }
+  .cat-picker button.active.manga{ border-color:var(--manga); color:var(--manga); background:rgba(138,79,125,0.12); }
+  .search-row{ display:flex; gap:8px; margin-bottom:16px; }
+  .search-row input{
+    flex:1; background:var(--surface-2); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:var(--ink);
+    padding:10px 12px; font-size:14px;
+  }
+  .search-row button{ background:var(--brass); color:#1b1608; font-weight:600; padding:0 16px; border-radius:6px; }
+  .results{ display:flex; flex-direction:column; gap:10px; min-height:40px; }
+  .result-item{
+    display:flex; gap:12px; padding:10px; background:var(--surface-2); border-radius:8px; align-items:center;
+  }
+  .result-item img{ width:44px; height:64px; object-fit:cover; border-radius:3px; background:#333; flex-shrink:0; }
+  .result-item .r-info{ flex:1; min-width:0; }
+  .result-item .r-info .r-title{ font-weight:600; font-size:14px; margin-bottom:2px; }
+  .result-item .r-info .r-meta{ font-size:12px; color:var(--muted); }
+  .result-item button{
+    background:none; border:1px solid var(--brass-dim); color:var(--brass); font-size:12px; padding:6px 10px;
+    border-radius:5px; flex-shrink:0;
+  }
+  .result-item button:hover{ background:rgba(201,162,39,0.12); }
+  .hint{ color:var(--muted); font-size:12.5px; text-align:center; padding:14px 0; }
+  .manual-link{ text-align:center; margin-top:14px; }
+  .manual-link button{ color:var(--muted); font-size:12.5px; text-decoration:underline; }
+  .manual-link button:hover{ color:var(--brass); }
+
+  /* ---------- Manual/detail form ---------- */
+  .form-grid{ display:flex; flex-direction:column; gap:14px; }
+  .field label{ display:block; font-size:12px; color:var(--muted); margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px; }
+  .field input, .field textarea, .field select{
+    width:100%; background:var(--surface-2); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:var(--ink);
+    padding:9px 11px; font-size:14px; resize:vertical;
+  }
+  .row2{ display:flex; gap:12px; }
+  .row2 > div{ flex:1; }
+  .stars{ display:flex; gap:4px; font-size:22px; }
+  .stars span{ color: rgba(255,255,255,0.2); cursor:pointer; }
+  .stars span.on{ color:var(--brass); }
+  .detail-cover{ width:110px; height:158px; object-fit:cover; border-radius:6px; box-shadow:var(--shadow); flex-shrink:0; background:#333; }
+  .detail-top{ display:flex; gap:16px; margin-bottom:18px; }
+  .detail-top .dt-meta{ flex:1; min-width:0; }
+  .detail-top h3{ margin:0 0 4px; font-size:19px; }
+  .detail-top .authors{ color:var(--muted); font-size:13px; margin-bottom:8px; }
+  .detail-top .desc{ font-size:12.8px; color:var(--muted); max-height:90px; overflow-y:auto; line-height:1.45; }
+  .form-actions{ display:flex; justify-content:space-between; margin-top:20px; align-items:center; }
+  .save-btn{ background:var(--brass); color:#1b1608; font-weight:600; padding:9px 20px; border-radius:6px; font-size:13.5px; }
+  .save-btn:hover{ background:#dbb52f; }
+  .delete-btn{ color:var(--danger); font-size:12.5px; }
+  .delete-btn:hover{ text-decoration:underline; }
+
+  @media (max-width: 640px){
+    header{ padding:20px; } .shelf-wrap, .toolbar, nav.tabs{ padding-left:20px; padding-right:20px; }
+    .ledger{ gap:14px; } .ledger div{ padding-right:12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>Mi Estante</h1>
+    <span class="tag">registro de lectura</span>
+  </div>
+  <div class="ledger" id="ledger"></div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-cat="libro" class="active"><span class="dot" style="background:var(--libro)"></span>Libros</button>
+  <button data-cat="comic"><span class="dot" style="background:var(--comic)"></span>Cómics</button>
+  <button data-cat="manga"><span class="dot" style="background:var(--manga)"></span>Manga</button>
+</nav>
+
+<div class="toolbar">
+  <div class="chips" id="statusChips">
+    <button class="chip active" data-status="todos">Todos</button>
+    <button class="chip" data-status="leyendo">Leyendo</button>
+    <button class="chip" data-status="pendiente">Pendiente</button>
+    <button class="chip" data-status="completado">Completado</button>
+    <button class="chip" data-status="abandonado">Abandonado</button>
+  </div>
+  <select id="sortSelect">
+    <option value="recent">Añadido recientemente</option>
+    <option value="title">Título (A-Z)</option>
+    <option value="rating">Valoración</option>
+  </select>
+  <button class="add-btn" id="openAdd">+ Añadir</button>
+</div>
+
+<div class="shelf-wrap">
+  <div class="shelf" id="shelf"></div>
+</div>
+
+<!-- Search / Add modal -->
+<div class="overlay" id="searchOverlay" style="display:none">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Añadir a tu biblioteca</h2>
+      <button id="closeSearch">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="cat-picker" id="catPicker">
+        <button data-cat="libro" class="active libro">Libro</button>
+        <button data-cat="comic" class="comic">Cómic</button>
+        <button data-cat="manga" class="manga">Manga</button>
+      </div>
+      <div class="search-row">
+        <input type="text" id="searchInput" placeholder="Título, autor...">
+        <button id="searchBtn">Buscar</button>
+      </div>
+      <div class="results" id="results"></div>
+      <div class="manual-link"><button id="manualBtn">¿No lo encuentras? Añadir manualmente</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail / edit modal -->
+<div class="overlay" id="detailOverlay" style="display:none">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="detailModalTitle">Editar</h2>
+      <button id="closeDetail">✕</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'mi-estante-biblioteca-v1';
+const CAT_LABEL = { libro:'Libro', comic:'Cómic', manga:'Manga' };
+const CAT_UNIT = { libro:'páginas', comic:'números', manga:'capítulos' };
+const STATUS_LABEL = { pendiente:'Pendiente', leyendo:'Leyendo', completado:'Completado', abandonado:'Abandonado' };
+const STATUS_ICON = { pendiente:'○', leyendo:'●', completado:'✓', abandonado:'×' };
+
+let library = loadLibrary();
+let state = { cat:'libro', status:'todos', sort:'recent' };
+
+function loadLibrary(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ console.error('Error leyendo almacenamiento', e); return []; }
+}
+function saveLibrary(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(library)); }
+  catch(e){ console.error('Error guardando', e); alert('No se pudo guardar. Revisa el almacenamiento del navegador.'); }
+}
+function uid(){ return 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
+
+// ---------- Rendering ----------
+function renderLedger(){
+  const total = library.length;
+  const leyendo = library.filter(i=>i.status==='leyendo').length;
+  const completado = library.filter(i=>i.status==='completado').length;
+  document.getElementById('ledger').innerHTML = `
+    <div><b>${total}</b>total</div>
+    <div><b>${leyendo}</b>leyendo</div>
+    <div><b>${completado}</b>terminados</div>
+  `;
+}
+
+function hashHeight(str){
+  let h=0; for(let i=0;i<str.length;i++) h = (h*31 + str.charCodeAt(i)) % 1000;
+  return 190 + (h % 34); // 190-224
+}
+function spineWidth(item){
+  const total = Number(item.total) || 0;
+  if(total <= 0) return 44;
+  return Math.max(38, Math.min(72, 34 + total/12));
+}
+
+function renderShelf(){
+  const shelf = document.getElementById('shelf');
+  let items = library.filter(i => i.category === state.cat);
+  if(state.status !== 'todos') items = items.filter(i => i.status === state.status);
+
+  if(state.sort === 'title') items.sort((a,b)=> a.title.localeCompare(b.title));
+  else if(state.sort === 'rating') items.sort((a,b)=> (b.rating||0)-(a.rating||0));
+  else items.sort((a,b)=> b.dateAdded - a.dateAdded);
+
+  if(items.length === 0){
+    shelf.innerHTML = `
+      <div class="empty-shelf">
+        <div class="display">Este estante está vacío</div>
+        <div>Busca tu primer ${CAT_LABEL[state.cat].toLowerCase()} para empezar a llenarlo.</div>
+        <button id="emptyAddBtn">+ Añadir ${CAT_LABEL[state.cat].toLowerCase()}</button>
+      </div>`;
+    document.getElementById('emptyAddBtn').addEventListener('click', ()=> openSearch(state.cat));
+    return;
+  }
+
+  shelf.innerHTML = items.map(item => {
+    const h = hashHeight(item.title);
+    const w = spineWidth(item);
+    return `
+      <div class="spine ${item.category} ${item.status==='abandonado'?'abandonado':''}" data-id="${item.id}"
+           style="height:${h}px; width:${w}px;">
+        <span class="status-mark" style="background:${statusColor(item.status)}">${STATUS_ICON[item.status]}</span>
+        <div class="band"></div>
+        <div class="title">${escapeHtml(item.title)}</div>
+        <div class="band bottom"></div>
+      </div>`;
+  }).join('');
+
+  shelf.querySelectorAll('.spine').forEach(el=>{
+    el.addEventListener('click', ()=> openDetail(el.dataset.id));
+  });
+}
+function statusColor(s){
+  return { pendiente:'#6b6b60', leyendo:'var(--brass)', completado:'var(--ok)', abandonado:'var(--danger)' }[s];
+}
+function escapeHtml(str){
+  const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML;
+}
+
+function renderAll(){ renderLedger(); renderShelf(); }
+
+// ---------- Tabs & filters ----------
+document.getElementById('tabs').addEventListener('click', e=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  state.cat = btn.dataset.cat;
+  renderShelf();
+});
+document.getElementById('statusChips').addEventListener('click', e=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  document.querySelectorAll('#statusChips .chip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  state.status = btn.dataset.status;
+  renderShelf();
+});
+document.getElementById('sortSelect').addEventListener('change', e=>{
+  state.sort = e.target.value; renderShelf();
+});
+
+// ---------- Search modal ----------
+let searchCat = 'libro';
+function openSearch(cat){
+  searchCat = cat || state.cat;
+  document.querySelectorAll('#catPicker button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.cat === searchCat);
+  });
+  document.getElementById('results').innerHTML = '';
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchOverlay').style.display = 'flex';
+  document.getElementById('searchInput').focus();
+}
+document.getElementById('openAdd').addEventListener('click', ()=> openSearch(state.cat));
+document.getElementById('closeSearch').addEventListener('click', ()=>{
+  document.getElementById('searchOverlay').style.display = 'none';
+});
+document.getElementById('catPicker').addEventListener('click', e=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  searchCat = btn.dataset.cat;
+  document.querySelectorAll('#catPicker button').forEach(b=>b.classList.toggle('active', b===btn));
+});
+document.getElementById('searchBtn').addEventListener('click', doSearch);
+document.getElementById('searchInput').addEventListener('keydown', e=>{ if(e.key==='Enter') doSearch(); });
+
+async function doSearch(){
+  const q = document.getElementById('searchInput').value.trim();
+  const results = document.getElementById('results');
+  if(!q){ return; }
+  results.innerHTML = `<div class="hint">Buscando…</div>`;
+  try{
+    const items = searchCat === 'manga' ? await searchManga(q) : await searchGoogleBooks(q);
+    if(items.length === 0){
+      results.innerHTML = `<div class="hint">Sin resultados. Prueba otra búsqueda o añade manualmente.</div>`;
+      return;
+    }
+    results.innerHTML = items.map((it, idx)=>`
+      <div class="result-item">
+        <img src="${it.cover || ''}" onerror="this.style.visibility='hidden'">
+        <div class="r-info">
+          <div class="r-title">${escapeHtml(it.title)}</div>
+          <div class="r-meta">${escapeHtml(it.authors)} ${it.year ? '· '+it.year : ''}</div>
+        </div>
+        <button data-idx="${idx}">Añadir</button>
+      </div>`).join('');
+    results.querySelectorAll('button[data-idx]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        addFromResult(items[Number(btn.dataset.idx)]);
+      });
+    });
+  }catch(err){
+    console.error(err);
+    results.innerHTML = `<div class="hint">No se pudo buscar (¿sin conexión?). Prueba de nuevo o añade manualmente.</div>`;
+  }
+}
+
+async function searchGoogleBooks(q){
+  const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8`);
+  const data = await res.json();
+  return (data.items || []).map(v=>{
+    const info = v.volumeInfo || {};
+    return {
+      title: info.title || 'Sin título',
+      authors: (info.authors || []).join(', ') || 'Autor desconocido',
+      cover: info.imageLinks ? (info.imageLinks.thumbnail || info.imageLinks.smallThumbnail || '').replace('http://','https://') : '',
+      description: info.description || '',
+      year: (info.publishedDate || '').slice(0,4),
+      total: info.pageCount || 0
+    };
+  });
+}
+
+async function searchManga(q){
+  const res = await fetch(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=8`);
+  const data = await res.json();
+  return (data.data || []).map(m=>{
+    return {
+      title: m.title_english || m.title || 'Sin título',
+      authors: (m.authors || []).map(a=>a.name).join(', ') || 'Autor desconocido',
+      cover: (m.images && m.images.jpg) ? m.images.jpg.image_url : '',
+      description: m.synopsis || '',
+      year: m.published && m.published.from ? m.published.from.slice(0,4) : '',
+      total: m.chapters || 0
+    };
+  });
+}
+
+function addFromResult(it){
+  const item = {
+    id: uid(),
+    category: searchCat,
+    title: it.title,
+    authors: it.authors,
+    cover: it.cover,
+    description: it.description,
+    year: it.year,
+    total: it.total || 0,
+    current: 0,
+    status: 'pendiente',
+    rating: 0,
+    notes: '',
+    dateAdded: Date.now(),
+    dateFinished: null
+  };
+  library.push(item);
+  saveLibrary();
+  document.getElementById('searchOverlay').style.display = 'none';
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active', b.dataset.cat===searchCat));
+  state.cat = searchCat;
+  renderAll();
+}
+
+// ---------- Manual add ----------
+document.getElementById('manualBtn').addEventListener('click', ()=>{
+  document.getElementById('searchOverlay').style.display = 'none';
+  openManualForm();
+});
+
+function openManualForm(){
+  document.getElementById('detailModalTitle').textContent = 'Añadir manualmente';
+  document.getElementById('detailBody').innerHTML = `
+    <div class="form-grid">
+      <div class="cat-picker" id="manualCatPicker">
+        <button data-cat="libro" class="active libro">Libro</button>
+        <button data-cat="comic" class="comic">Cómic</button>
+        <button data-cat="manga" class="manga">Manga</button>
+      </div>
+      <div class="field"><label>Título</label><input id="mTitle" type="text"></div>
+      <div class="field"><label>Autor(es)</label><input id="mAuthors" type="text"></div>
+      <div class="field"><label>URL de portada (opcional)</label><input id="mCover" type="text" placeholder="https://..."></div>
+      <div class="row2">
+        <div class="field"><label>Año</label><input id="mYear" type="text"></div>
+        <div class="field"><label>Total (páginas/capítulos)</label><input id="mTotal" type="number" min="0"></div>
+      </div>
+      <div class="form-actions">
+        <span></span>
+        <button class="save-btn" id="mSave">Añadir a mi biblioteca</button>
+      </div>
+    </div>`;
+  let mCat = 'libro';
+  document.getElementById('manualCatPicker').addEventListener('click', e=>{
+    const btn = e.target.closest('button'); if(!btn) return;
+    mCat = btn.dataset.cat;
+    document.querySelectorAll('#manualCatPicker button').forEach(b=>b.classList.toggle('active', b===btn));
+  });
+  document.getElementById('mSave').addEventListener('click', ()=>{
+    const title = document.getElementById('mTitle').value.trim();
+    if(!title){ alert('El título es obligatorio.'); return; }
+    const item = {
+      id: uid(), category: mCat, title,
+      authors: document.getElementById('mAuthors').value.trim() || 'Autor desconocido',
+      cover: document.getElementById('mCover').value.trim(),
+      description: '', year: document.getElementById('mYear').value.trim(),
+      total: Number(document.getElementById('mTotal').value) || 0,
+      current: 0, status: 'pendiente', rating: 0, notes: '',
+      dateAdded: Date.now(), dateFinished: null
+    };
+    library.push(item); saveLibrary();
+    document.getElementById('detailOverlay').style.display = 'none';
+    document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active', b.dataset.cat===mCat));
+    state.cat = mCat;
+    renderAll();
+  });
+  document.getElementById('detailOverlay').style.display = 'flex';
+}
+
+// ---------- Detail / edit modal ----------
+function openDetail(id){
+  const item = library.find(i=>i.id===id);
+  if(!item) return;
+  document.getElementById('detailModalTitle').textContent = CAT_LABEL[item.category];
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-top">
+      <img class="detail-cover" src="${item.cover||''}" onerror="this.style.visibility='hidden'">
+      <div class="dt-meta">
+        <h3>${escapeHtml(item.title)}</h3>
+        <div class="authors">${escapeHtml(item.authors)} ${item.year? '· '+escapeHtml(item.year):''}</div>
+        <div class="desc">${escapeHtml((item.description||'').slice(0,300)) || 'Sin descripción.'}</div>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="row2">
+        <div class="field">
+          <label>Estado</label>
+          <select id="dStatus">
+            ${Object.keys(STATUS_LABEL).map(s=>`<option value="${s}" ${s===item.status?'selected':''}>${STATUS_LABEL[s]}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>Progreso (${CAT_UNIT[item.category]})</label>
+          <div class="row2">
+            <input id="dCurrent" type="number" min="0" value="${item.current||0}" placeholder="actual">
+            <input id="dTotal" type="number" min="0" value="${item.total||0}" placeholder="total">
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Valoración</label>
+        <div class="stars" id="dStars">
+          ${[1,2,3,4,5].map(n=>`<span data-n="${n}" class="${n<=(item.rating||0)?'on':''}">★</span>`).join('')}
+        </div>
+      </div>
+      <div class="field"><label>Notas</label><textarea id="dNotes" rows="3">${escapeHtml(item.notes||'')}</textarea></div>
+      <div class="form-actions">
+        <button class="delete-btn" id="dDelete">Eliminar</button>
+        <button class="save-btn" id="dSave">Guardar cambios</button>
+      </div>
+    </div>`;
+
+  let rating = item.rating || 0;
+  document.getElementById('dStars').addEventListener('click', e=>{
+    const s = e.target.closest('span'); if(!s) return;
+    rating = Number(s.dataset.n);
+    document.querySelectorAll('#dStars span').forEach(sp=> sp.classList.toggle('on', Number(sp.dataset.n)<=rating));
+  });
+  document.getElementById('dSave').addEventListener('click', ()=>{
+    item.status = document.getElementById('dStatus').value;
+    item.current = Number(document.getElementById('dCurrent').value) || 0;
+    item.total = Number(document.getElementById('dTotal').value) || 0;
+    item.rating = rating;
+    item.notes = document.getElementById('dNotes').value;
+    if(item.status === 'completado' && !item.dateFinished) item.dateFinished = Date.now();
+    saveLibrary();
+    document.getElementById('detailOverlay').style.display = 'none';
+    renderAll();
+  });
+  document.getElementById('dDelete').addEventListener('click', ()=>{
+    if(!confirm('¿Eliminar este título de tu biblioteca?')) return;
+    library = library.filter(i=>i.id!==id);
+    saveLibrary();
+    document.getElementById('detailOverlay').style.display = 'none';
+    renderAll();
+  });
+  document.getElementById('detailOverlay').style.display = 'flex';
+}
+document.getElementById('closeDetail').addEventListener('click', ()=>{
+  document.getElementById('detailOverlay').style.display = 'none';
+});
+document.getElementById('searchOverlay').addEventListener('click', e=>{
+  if(e.target.id === 'searchOverlay') e.target.style.display = 'none';
+});
+document.getElementById('detailOverlay').addEventListener('click', e=>{
+  if(e.target.id === 'detailOverlay') e.target.style.display = 'none';
+});
+
+renderAll();
+</script>
+</body>
+</html>
