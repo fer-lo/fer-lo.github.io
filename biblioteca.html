@@ -98,13 +98,18 @@
   /* ---------- Shelf ---------- */
   .shelf-wrap{ padding: 30px 32px 60px; }
   .shelf{
-    display:flex; flex-wrap:wrap; align-items:flex-end; gap:6px;
-    padding: 0 0 22px 0;
+    display:flex; flex-wrap:wrap; align-items:flex-start; gap:6px;
+    padding: 0 0 14px 0;
     background-image: repeating-linear-gradient(
       to bottom,
-      transparent 0px, transparent 214px,
-      var(--wood) 214px, var(--wood-light) 220px, transparent 224px
+      transparent 0px, transparent 230px,
+      var(--wood-light) 230px, var(--wood) 232px, var(--wood) 236px, transparent 236px
     );
+    background-size: 100% 236px;
+  }
+  .spine-slot{
+    height:230px; width:auto; flex:0 0 auto;
+    display:flex; align-items:flex-end; justify-content:center;
   }
   .spine{
     width:48px; border-radius:3px 3px 0 0;
@@ -234,7 +239,8 @@
 </header>
 
 <nav class="tabs" id="tabs">
-  <button data-cat="libro" class="active"><span class="dot" style="background:var(--libro)"></span>Libros</button>
+  <button data-cat="todos" class="active"><span class="dot" style="background:var(--brass)"></span>Todo</button>
+  <button data-cat="libro"><span class="dot" style="background:var(--libro)"></span>Libros</button>
   <button data-cat="comic"><span class="dot" style="background:var(--comic)"></span>Cómics</button>
   <button data-cat="manga"><span class="dot" style="background:var(--manga)"></span>Manga</button>
 </nav>
@@ -248,6 +254,7 @@
     <button class="chip" data-status="abandonado">Abandonado</button>
   </div>
   <select id="sortSelect">
+    <option value="added-asc">Orden de agregado</option>
     <option value="recent">Añadido recientemente</option>
     <option value="title">Título (A-Z)</option>
     <option value="rating">Valoración</option>
@@ -301,7 +308,7 @@ const STATUS_LABEL = { pendiente:'Pendiente', leyendo:'Leyendo', completado:'Com
 const STATUS_ICON = { pendiente:'○', leyendo:'●', completado:'✓', abandonado:'×' };
 
 let library = loadLibrary();
-let state = { cat:'libro', status:'todos', sort:'recent' };
+let state = { cat:'todos', status:'todos', sort:'added-asc' };
 
 function loadLibrary(){
   try{
@@ -327,46 +334,56 @@ function renderLedger(){
   `;
 }
 
+function hashStr(str){
+  let h=0; for(let i=0;i<str.length;i++) h = (h*31 + str.charCodeAt(i)) % 100000;
+  return h;
+}
 function hashHeight(str){
-  let h=0; for(let i=0;i<str.length;i++) h = (h*31 + str.charCodeAt(i)) % 1000;
-  return 190 + (h % 34); // 190-224
+  return 178 + (hashStr(str) % 46); // 178-224, look at the title
 }
 function spineWidth(item){
+  // base procedural variety from the title (so spines never look uniform even without page data)
+  const base = 36 + (hashStr(item.title + '#w') % 20); // 36-55
   const total = Number(item.total) || 0;
-  if(total <= 0) return 44;
-  return Math.max(38, Math.min(72, 34 + total/12));
+  const bonus = total > 0 ? Math.min(34, total / 14) : 0; // thicker for longer works
+  return Math.round(Math.min(88, base + bonus));
 }
 
 function renderShelf(){
   const shelf = document.getElementById('shelf');
-  let items = library.filter(i => i.category === state.cat);
+  let items = state.cat === 'todos' ? library.slice() : library.filter(i => i.category === state.cat);
   if(state.status !== 'todos') items = items.filter(i => i.status === state.status);
 
   if(state.sort === 'title') items.sort((a,b)=> a.title.localeCompare(b.title));
   else if(state.sort === 'rating') items.sort((a,b)=> (b.rating||0)-(a.rating||0));
+  else if(state.sort === 'added-asc') items.sort((a,b)=> a.dateAdded - b.dateAdded);
   else items.sort((a,b)=> b.dateAdded - a.dateAdded);
 
   if(items.length === 0){
+    const label = state.cat === 'todos' ? 'título' : CAT_LABEL[state.cat].toLowerCase();
     shelf.innerHTML = `
       <div class="empty-shelf">
         <div class="display">Este estante está vacío</div>
-        <div>Busca tu primer ${CAT_LABEL[state.cat].toLowerCase()} para empezar a llenarlo.</div>
-        <button id="emptyAddBtn">+ Añadir ${CAT_LABEL[state.cat].toLowerCase()}</button>
+        <div>Busca tu primer ${label} para empezar a llenarlo.</div>
+        <button id="emptyAddBtn">+ Añadir ${label}</button>
       </div>`;
-    document.getElementById('emptyAddBtn').addEventListener('click', ()=> openSearch(state.cat));
+    document.getElementById('emptyAddBtn').addEventListener('click', ()=> openSearch(state.cat === 'todos' ? 'libro' : state.cat));
     return;
   }
 
   shelf.innerHTML = items.map(item => {
     const h = hashHeight(item.title);
     const w = spineWidth(item);
+    const tip = escapeHtml(item.title) + (item.total ? ` · ${item.total} ${CAT_UNIT[item.category]}` : '');
     return `
-      <div class="spine ${item.category} ${item.status==='abandonado'?'abandonado':''}" data-id="${item.id}"
-           style="height:${h}px; width:${w}px;">
-        <span class="status-mark" style="background:${statusColor(item.status)}">${STATUS_ICON[item.status]}</span>
-        <div class="band"></div>
-        <div class="title">${escapeHtml(item.title)}</div>
-        <div class="band bottom"></div>
+      <div class="spine-slot">
+        <div class="spine ${item.category} ${item.status==='abandonado'?'abandonado':''}" data-id="${item.id}"
+             style="height:${h}px; width:${w}px;" title="${tip}">
+          <span class="status-mark" style="background:${statusColor(item.status)}">${STATUS_ICON[item.status]}</span>
+          <div class="band"></div>
+          <div class="title">${escapeHtml(item.title)}</div>
+          <div class="band bottom"></div>
+        </div>
       </div>`;
   }).join('');
 
@@ -389,6 +406,8 @@ document.getElementById('tabs').addEventListener('click', e=>{
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   state.cat = btn.dataset.cat;
+  state.sort = state.cat === 'todos' ? 'added-asc' : 'recent';
+  document.getElementById('sortSelect').value = state.sort;
   renderShelf();
 });
 document.getElementById('statusChips').addEventListener('click', e=>{
@@ -414,7 +433,7 @@ function openSearch(cat){
   document.getElementById('searchOverlay').style.display = 'flex';
   document.getElementById('searchInput').focus();
 }
-document.getElementById('openAdd').addEventListener('click', ()=> openSearch(state.cat));
+document.getElementById('openAdd').addEventListener('click', ()=> openSearch(state.cat === 'todos' ? 'libro' : state.cat));
 document.getElementById('closeSearch').addEventListener('click', ()=>{
   document.getElementById('searchOverlay').style.display = 'none';
 });
@@ -448,7 +467,7 @@ async function doSearch(){
       </div>`).join('');
     results.querySelectorAll('button[data-idx]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
-        addFromResult(items[Number(btn.dataset.idx)]);
+        addFromResult(items[Number(btn.dataset.idx)], btn);
       });
     });
   }catch(err){
@@ -458,19 +477,38 @@ async function doSearch(){
 }
 
 async function searchGoogleBooks(q){
-  const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8`);
+  const res = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=8`);
+  if(!res.ok) throw new Error('Open Library respondió con estado ' + res.status);
   const data = await res.json();
-  return (data.items || []).map(v=>{
-    const info = v.volumeInfo || {};
+  return (data.docs || []).map(d=>{
+    let desc = '';
+    if(d.first_sentence){
+      desc = Array.isArray(d.first_sentence) ? d.first_sentence[0] : d.first_sentence;
+    }
     return {
-      title: info.title || 'Sin título',
-      authors: (info.authors || []).join(', ') || 'Autor desconocido',
-      cover: info.imageLinks ? (info.imageLinks.thumbnail || info.imageLinks.smallThumbnail || '').replace('http://','https://') : '',
-      description: info.description || '',
-      year: (info.publishedDate || '').slice(0,4),
-      total: info.pageCount || 0
+      title: d.title || 'Sin título',
+      authors: (d.author_name || []).join(', ') || 'Autor desconocido',
+      cover: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg` : '',
+      description: desc,
+      year: d.first_publish_year ? String(d.first_publish_year) : '',
+      total: d.number_of_pages_median || 0,
+      workKey: d.key || ''
     };
   });
+}
+
+async function fetchOpenLibraryPages(workKey){
+  if(!workKey) return 0;
+  try{
+    const res = await fetch(`https://openlibrary.org${workKey}/editions.json?limit=10`);
+    if(!res.ok) return 0;
+    const data = await res.json();
+    const editions = data.entries || [];
+    for(const ed of editions){
+      if(ed.number_of_pages) return ed.number_of_pages;
+    }
+  }catch(e){ console.warn('No se pudo obtener el número de páginas', e); }
+  return 0;
 }
 
 async function searchManga(q){
@@ -512,7 +550,12 @@ async function searchManga(q){
   });
 }
 
-function addFromResult(it){
+async function addFromResult(it, btn){
+  let total = it.total || 0;
+  if(!total && it.workKey && (searchCat === 'libro' || searchCat === 'comic')){
+    if(btn){ btn.textContent = 'Buscando páginas…'; btn.disabled = true; }
+    total = await fetchOpenLibraryPages(it.workKey);
+  }
   const item = {
     id: uid(),
     category: searchCat,
@@ -521,7 +564,7 @@ function addFromResult(it){
     cover: it.cover,
     description: it.description,
     year: it.year,
-    total: it.total || 0,
+    total: total || 0,
     current: 0,
     status: 'pendiente',
     rating: 0,
@@ -532,8 +575,6 @@ function addFromResult(it){
   library.push(item);
   saveLibrary();
   document.getElementById('searchOverlay').style.display = 'none';
-  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active', b.dataset.cat===searchCat));
-  state.cat = searchCat;
   renderAll();
 }
 
@@ -555,10 +596,7 @@ function openManualForm(){
       <div class="field"><label>Título</label><input id="mTitle" type="text"></div>
       <div class="field"><label>Autor(es)</label><input id="mAuthors" type="text"></div>
       <div class="field"><label>URL de portada (opcional)</label><input id="mCover" type="text" placeholder="https://..."></div>
-      <div class="row2">
-        <div class="field"><label>Año</label><input id="mYear" type="text"></div>
-        <div class="field"><label>Total (páginas/capítulos)</label><input id="mTotal" type="number" min="0"></div>
-      </div>
+      <div class="field"><label>Año</label><input id="mYear" type="text"></div>
       <div class="form-actions">
         <span></span>
         <button class="save-btn" id="mSave">Añadir a mi biblioteca</button>
@@ -578,14 +616,12 @@ function openManualForm(){
       authors: document.getElementById('mAuthors').value.trim() || 'Autor desconocido',
       cover: document.getElementById('mCover').value.trim(),
       description: '', year: document.getElementById('mYear').value.trim(),
-      total: Number(document.getElementById('mTotal').value) || 0,
+      total: 0,
       current: 0, status: 'pendiente', rating: 0, notes: '',
       dateAdded: Date.now(), dateFinished: null
     };
     library.push(item); saveLibrary();
     document.getElementById('detailOverlay').style.display = 'none';
-    document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active', b.dataset.cat===mCat));
-    state.cat = mCat;
     renderAll();
   });
   document.getElementById('detailOverlay').style.display = 'flex';
@@ -606,20 +642,11 @@ function openDetail(id){
       </div>
     </div>
     <div class="form-grid">
-      <div class="row2">
-        <div class="field">
-          <label>Estado</label>
-          <select id="dStatus">
-            ${Object.keys(STATUS_LABEL).map(s=>`<option value="${s}" ${s===item.status?'selected':''}>${STATUS_LABEL[s]}</option>`).join('')}
-          </select>
-        </div>
-        <div class="field">
-          <label>Progreso (${CAT_UNIT[item.category]})</label>
-          <div class="row2">
-            <input id="dCurrent" type="number" min="0" value="${item.current||0}" placeholder="actual">
-            <input id="dTotal" type="number" min="0" value="${item.total||0}" placeholder="total">
-          </div>
-        </div>
+      <div class="field">
+        <label>Estado</label>
+        <select id="dStatus">
+          ${Object.keys(STATUS_LABEL).map(s=>`<option value="${s}" ${s===item.status?'selected':''}>${STATUS_LABEL[s]}</option>`).join('')}
+        </select>
       </div>
       <div class="field">
         <label>Valoración</label>
@@ -642,8 +669,6 @@ function openDetail(id){
   });
   document.getElementById('dSave').addEventListener('click', ()=>{
     item.status = document.getElementById('dStatus').value;
-    item.current = Number(document.getElementById('dCurrent').value) || 0;
-    item.total = Number(document.getElementById('dTotal').value) || 0;
     item.rating = rating;
     item.notes = document.getElementById('dNotes').value;
     if(item.status === 'completado' && !item.dateFinished) item.dateFinished = Date.now();
