@@ -474,15 +474,39 @@ async function searchGoogleBooks(q){
 }
 
 async function searchManga(q){
-  const res = await fetch(`https://api.jikan.moe/v4/manga?q=${encodeURIComponent(q)}&limit=8`);
+  const query = `
+    query ($search: String) {
+      Page(perPage: 8) {
+        media(search: $search, type: MANGA, sort: SEARCH_MATCH) {
+          title { romaji english }
+          coverImage { large }
+          description
+          chapters
+          startDate { year }
+          staff(perPage: 4) { edges { role node { name { full } } } }
+        }
+      }
+    }`;
+  const res = await fetch('https://graphql.anilist.co', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({ query, variables: { search: q } })
+  });
+  if(!res.ok) throw new Error('AniList respondió con estado ' + res.status);
   const data = await res.json();
-  return (data.data || []).map(m=>{
+  const list = (data.data && data.data.Page && data.data.Page.media) || [];
+  return list.map(m=>{
+    const authors = (m.staff && m.staff.edges ? m.staff.edges : [])
+      .filter(e => /story|art/i.test(e.role || ''))
+      .map(e => e.node.name.full)
+      .filter((v,i,a)=> a.indexOf(v)===i)
+      .join(', ');
     return {
-      title: m.title_english || m.title || 'Sin título',
-      authors: (m.authors || []).map(a=>a.name).join(', ') || 'Autor desconocido',
-      cover: (m.images && m.images.jpg) ? m.images.jpg.image_url : '',
-      description: m.synopsis || '',
-      year: m.published && m.published.from ? m.published.from.slice(0,4) : '',
+      title: (m.title && (m.title.english || m.title.romaji)) || 'Sin título',
+      authors: authors || 'Autor desconocido',
+      cover: m.coverImage ? m.coverImage.large : '',
+      description: (m.description || '').replace(/<[^>]+>/g, ''),
+      year: m.startDate && m.startDate.year ? String(m.startDate.year) : '',
       total: m.chapters || 0
     };
   });
