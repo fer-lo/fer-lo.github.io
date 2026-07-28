@@ -4,9 +4,9 @@ Webapp personal para registrar libros, cómics y manga que voy leyendo. Un solo 
 
 ## Estado actual
 
-- **Archivo**: `biblioteca.html` (un solo archivo, sin dependencias externas de build).
-- **Hosting**: GitHub Pages (estático, sin backend).
-- **Persistencia actual**: `localStorage` del navegador → **cada dispositivo tiene su propia copia, no sincronizan entre sí.** Este es el problema pendiente a resolver (ver más abajo).
+- **Archivos**: `estante/index.html`, `estante/styles.css`, `estante/app.js` (separados; antes era un solo `biblioteca.html`).
+- **Hosting**: GitHub Pages (estático, sin servidor propio).
+- **Persistencia**: **Supabase** (Postgres + Auth), sincroniza entre dispositivos. Ver detalle en la sección de Supabase más abajo.
 - **Diseño**: estantería de libros. Cada título es un "lomo" vertical con color según categoría (azul = libro, naranja = cómic, morado = manga), con texto rotado tipo lomo real. El grosor del lomo varía según páginas/capítulos reales cuando existen, más una variación orgánica basada en el título para que nunca se vean todos iguales. Los lomos están agrupados en "slots" de altura fija (230px) para que la tabla de madera del estante quede siempre justo debajo de todos, sin cruzarlos.
 
 ## Categorías y estados
@@ -35,11 +35,11 @@ Al añadir un título, se busca en APIs públicas (sin API key) para traer porta
 
 Si en el futuro cualquiera de las dos vuelve a fallar, el patrón a seguir es el mismo: buscar una alternativa sin API key con CORS confiable, no volver a las anteriores.
 
-## Modelo de datos (cada item guardado)
+## Modelo de datos (tabla `items` en Supabase, camelCase en JS ↔ snake_case en DB)
 
 ```json
 {
-  "id": "id_...",
+  "id": "uuid (generado por Supabase)",
   "category": "libro | comic | manga",
   "title": "string",
   "authors": "string",
@@ -51,44 +51,25 @@ Si en el futuro cualquiera de las dos vuelve a fallar, el patrón a seguir es el
   "status": "pendiente | leyendo | completado | abandonado",
   "rating": "0-5",
   "notes": "string",
-  "dateAdded": "timestamp",
+  "dateAdded": "timestamp (bigint, Date.now())",
   "dateFinished": "timestamp | null"
 }
 ```
+En la tabla `items` los campos son snake_case (`date_added`, `date_finished`); `app.js` tiene `rowToItem()`/`itemToRow()` para mapear entre uno y otro.
 
-## Sincronización entre dispositivos — EN PROGRESO (Supabase)
+## Sincronización entre dispositivos — RESUELTO con Supabase
 
-Se decidió ir directo por la opción Supabase (backend gratuito hosteado, la app se sigue sirviendo estática desde GitHub Pages). Estado exacto al cortar:
-
-### Archivos
-- La app ahora vive en `estante/` con `index.html`, `styles.css`, `app.js` (ya no existe `biblioteca.html`, fue reemplazado — commit ya pusheado a `main`).
-- El código de Supabase (cliente, mapeo de filas, login, CRUD) **ya está escrito en `app.js` e `index.html`**, pero commiteado solo LOCALMENTE, no pusheado — el login todavía no es funcional (ver bloqueo abajo), así que no se subió para no romper la versión pública.
-
-### Proyecto Supabase
-- URL: `https://asevcnpqptmncjewekry.supabase.co`
-- Publishable (anon) key ya está hardcodeada en `app.js` (es pública/segura de exponer en cliente, no es la `service_role`).
-- **Falta correr el SQL** que crea la tabla `items` + políticas RLS (por usuario, vía `auth.uid()`). El bloque SQL completo se le pasó al usuario en el chat — si no se corrió todavía, hay que volver a generarlo o buscarlo en el historial de esta conversación antes de continuar. Sin esta tabla, cualquier login que funcione no va a poder leer/guardar libros.
-
-### Login: por qué es OTP de 6 dígitos y no magic link
-- Se implementó primero con magic link (click en el mail) pero falló con `otp_expired` — Gmail escanea/pre-visita los links de seguridad y gasta el token de un solo uso antes de que el usuario lo clickee. Es un problema conocido de Supabase + Gmail.
-- Se cambió el flujo a **código de 6 dígitos escrito a mano** (`signInWithOtp` + `verifyOtp` con `type: 'email'`), inmune a ese problema. El HTML ya tiene el segundo form (`#codeForm`) y el JS ya maneja los dos pasos.
-
-### Bloqueo actual: falta SMTP propio
-- Supabase no deja editar las plantillas de email (necesario para agregar `{{ .Token }}`, que es lo que muestra el código de 6 dígitos en el mail) sin conectar un proveedor SMTP propio — el servicio de email interno de Supabase es solo para pruebas.
-- Se eligió **Resend** (gratis, sin tarjeta, dominio de pruebas `onboarding@resend.dev` que no requiere verificar dominio propio).
-- Pasos pendientes en Resend + Supabase:
-  1. Crear cuenta en resend.com y generar una API key (`re_...`).
-  2. En Supabase: **Project Settings → Authentication → SMTP Settings** → activar "Enable Custom SMTP" con host `smtp.resend.com`, puerto `465`, usuario `resend`, password = la API key de Resend, sender `onboarding@resend.dev`.
-  3. En Supabase: **Authentication → Email Templates → Magic Link** → agregar `{{ .Token }}` en el cuerpo del mail (ej. "Tu código de acceso es: {{ .Token }}") y guardar.
-  4. Ya con eso, probar el login end-to-end: pedir código, revisar mail de `holaferfi@gmail.com`, ingresar el código de 6 dígitos en la app.
-
-### También pendiente (config de auth, ya explicada al usuario, no confirmado si se hizo)
-- En Supabase → Authentication → URL Configuration: Site URL = `https://fer-lo.github.io/estante/`, y agregar `http://localhost:8934/*` a Redirect URLs (para poder seguir probando en local). Esto ya no es estrictamente necesario para el flujo de código de 6 dígitos (no depende de redirect), pero no está de más tenerlo configurado.
+- **Proyecto**: `https://asevcnpqptmncjewekry.supabase.co`. La publishable (anon) key está hardcodeada en `app.js` (es pública/segura de exponer en cliente, no confundir con la `service_role`).
+- **Tabla `items`**: ya creada, con RLS (row level security) para que cada usuario solo vea/edite sus propias filas (`user_id = auth.uid()`, con default `auth.uid()` en el insert).
+- **Auth**: login con **email + contraseña** (`signUp` / `signInWithPassword` de Supabase). Se eligió este método, no magic link ni OTP por mail, porque:
+  - El magic link falló con `otp_expired` — Gmail escanea/pre-visita los links de seguridad y gasta el token de un solo uso antes de que el usuario lo clickee (problema conocido Supabase + Gmail).
+  - El código OTP de 6 dígitos por mail funcionaba, pero Supabase exige conectar un SMTP propio (Resend, etc.) para poder editar el template de email y mostrar el código — fricción innecesaria para una app de un solo usuario.
+  - Con email+contraseña no se manda ningún mail: hace falta tener **"Confirm email" desactivado** en Supabase (Authentication → Providers → Email), si no el signup pide una confirmación por mail que no puede llegar sin SMTP.
+- **UI de login**: overlay a pantalla completa (`#authOverlay` en `index.html`) con un solo form (email + contraseña) y dos botones: "Crear cuenta" (signup) y "Entrar" (signin). Mientras no hay sesión, tapa el resto de la app.
+- **Recuperar contraseña**: no hay flujo de "olvidé mi contraseña" implementado (requeriría mail/SMTP). Si se olvida, resetearla a mano desde el dashboard de Supabase (Authentication → Users → editar usuario) o borrar el usuario y crear uno nuevo (se pierde el `user_id`, así que se perderían los items asociados — mejor resetear la contraseña, no borrar el usuario, si ya hay datos cargados).
+- **Probado end-to-end** (crear cuenta, login, agregar libro, editar estado/rating, recargar y ver que persiste, borrar) el 2026-07-28 en local, funcionando correctamente.
 
 ## Siguiente paso al retomar con Claude Code
 
-1. Confirmar si se corrió el SQL de la tabla `items` (si no, correrlo — está en el historial de esta conversación).
-2. Terminar de conectar Resend como SMTP en Supabase y agregar `{{ .Token }}` al template de Magic Link.
-3. Probar el login completo en local (`python3 -m http.server` en `estante/` + navegador) con `holaferfi@gmail.com`.
-4. Una vez que el login y el guardado/lectura de libros funcionen end-to-end, pushear los cambios de `app.js`/`index.html`/`styles.css` que ya están commiteados localmente (o hacer un nuevo commit si hay más cambios).
-5. Mantener el resto de la app (UI, búsqueda, lomos) sin cambios — solo cambió de dónde se lee/escribe la biblioteca.
+- La sincronización ya está resuelta y en uso. Si se retoma el proyecto, probablemente sea para features nuevas (ej. export/import, edición de más campos, mejoras de UI) más que para temas de auth/backend.
+- Si en algún momento se quiere agregar recuperación de contraseña por mail, ahí sí retomar la idea de conectar Resend como SMTP en Supabase (ver Authentication → Email Templates y Authentication → SMTP Settings del dashboard).

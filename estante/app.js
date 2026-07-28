@@ -33,19 +33,14 @@ async function loadLibrary(){
 }
 
 // ---------- Auth ----------
-let pendingEmail = '';
 function setAuthUI(session){
   document.getElementById('authOverlay').style.display = session ? 'none' : 'flex';
   document.getElementById('account').style.display = session ? 'flex' : 'none';
   if(session){
     document.getElementById('userEmail').textContent = session.user.email;
   }else{
-    document.getElementById('loginForm').style.display = 'flex';
-    document.getElementById('codeForm').style.display = 'none';
-    document.getElementById('loginEmail').value = '';
-    document.getElementById('loginCode').value = '';
+    document.getElementById('loginPassword').value = '';
     document.getElementById('loginMsg').textContent = '';
-    document.getElementById('codeMsg').textContent = '';
   }
 }
 async function refreshAndRender(){
@@ -65,25 +60,21 @@ async function initAuth(){
 document.getElementById('loginForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
   const msg = document.getElementById('loginMsg');
-  if(!email) return;
-  msg.textContent = 'Enviando código…';
-  const { error } = await db.auth.signInWithOtp({ email });
-  if(error){ msg.textContent = 'Error: ' + error.message; return; }
-  pendingEmail = email;
-  msg.textContent = '';
-  document.getElementById('loginForm').style.display = 'none';
-  document.getElementById('codeForm').style.display = 'flex';
-  document.getElementById('codeMsg').textContent = 'Revisá tu correo y escribí el código de 6 dígitos.';
+  if(!email || !password) return;
+  msg.textContent = 'Entrando…';
+  const { error } = await db.auth.signInWithPassword({ email, password });
+  msg.textContent = error ? 'Error: ' + error.message : '';
 });
-document.getElementById('codeForm').addEventListener('submit', async e=>{
-  e.preventDefault();
-  const code = document.getElementById('loginCode').value.trim();
-  const msg = document.getElementById('codeMsg');
-  if(!code) return;
-  msg.textContent = 'Verificando…';
-  const { error } = await db.auth.verifyOtp({ email: pendingEmail, token: code, type: 'email' });
-  if(error) msg.textContent = 'Error: ' + error.message;
+document.getElementById('signupBtn').addEventListener('click', async ()=>{
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const msg = document.getElementById('loginMsg');
+  if(!email || !password){ msg.textContent = 'Completá email y contraseña.'; return; }
+  msg.textContent = 'Creando cuenta…';
+  const { error } = await db.auth.signUp({ email, password });
+  msg.textContent = error ? 'Error: ' + error.message : 'Cuenta creada.';
 });
 document.getElementById('logoutBtn').addEventListener('click', ()=> db.auth.signOut());
 

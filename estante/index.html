@@ -91,26 +91,21 @@
       <h2>Mi Estante</h2>
     </div>
     <div class="modal-body">
-      <p style="color:var(--muted); font-size:13.5px; margin:0 0 16px;">Ingresá tu email para recibir un código de acceso a tu biblioteca.</p>
+      <p style="color:var(--muted); font-size:13.5px; margin:0 0 16px;">Iniciá sesión para acceder a tu biblioteca.</p>
       <form id="loginForm" class="form-grid">
         <div class="field">
           <label>Email</label>
           <input type="email" id="loginEmail" required placeholder="vos@ejemplo.com">
         </div>
-        <div class="form-actions">
-          <span id="loginMsg" style="color:var(--muted); font-size:12.5px;"></span>
-          <button type="submit" class="save-btn">Enviar código</button>
-        </div>
-      </form>
-      <form id="codeForm" class="form-grid" style="display:none; margin-top:14px;">
         <div class="field">
-          <label>Código de 6 dígitos</label>
-          <input type="text" id="loginCode" inputmode="numeric" maxlength="6" placeholder="123456">
+          <label>Contraseña</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••" minlength="6">
         </div>
         <div class="form-actions">
-          <span id="codeMsg" style="color:var(--muted); font-size:12.5px;"></span>
-          <button type="submit" class="save-btn">Verificar</button>
+          <button type="button" id="signupBtn" style="color:var(--muted); font-size:12.5px; text-decoration:underline;">Crear cuenta</button>
+          <button type="submit" class="save-btn">Entrar</button>
         </div>
+        <div id="loginMsg" style="color:var(--muted); font-size:12.5px; text-align:center;"></div>
       </form>
     </div>
   </div>
