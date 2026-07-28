@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Estante</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>Mi Estante</h1>
+    <span class="tag">registro de lectura</span>
+  </div>
+  <div class="ledger" id="ledger"></div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-cat="todos" class="active"><span class="dot" style="background:var(--brass)"></span>Todo</button>
+  <button data-cat="libro"><span class="dot" style="background:var(--libro)"></span>Libros</button>
+  <button data-cat="comic"><span class="dot" style="background:var(--comic)"></span>Cómics</button>
+  <button data-cat="manga"><span class="dot" style="background:var(--manga)"></span>Manga</button>
+</nav>
+
+<div class="toolbar">
+  <div class="chips" id="statusChips">
+    <button class="chip active" data-status="todos">Todos</button>
+    <button class="chip" data-status="leyendo">Leyendo</button>
+    <button class="chip" data-status="pendiente">Pendiente</button>
+    <button class="chip" data-status="completado">Completado</button>
+    <button class="chip" data-status="abandonado">Abandonado</button>
+  </div>
+  <select id="sortSelect">
+    <option value="added-asc">Orden de agregado</option>
+    <option value="recent">Añadido recientemente</option>
+    <option value="title">Título (A-Z)</option>
+    <option value="rating">Valoración</option>
+  </select>
+  <button class="add-btn" id="openAdd">+ Añadir</button>
+</div>
+
+<div class="shelf-wrap">
+  <div class="shelf" id="shelf"></div>
+</div>
+
+<!-- Search / Add modal -->
+<div class="overlay" id="searchOverlay" style="display:none">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Añadir a tu biblioteca</h2>
+      <button id="closeSearch">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="cat-picker" id="catPicker">
+        <button data-cat="libro" class="active libro">Libro</button>
+        <button data-cat="comic" class="comic">Cómic</button>
+        <button data-cat="manga" class="manga">Manga</button>
+      </div>
+      <div class="search-row">
+        <input type="text" id="searchInput" placeholder="Título, autor...">
+        <button id="searchBtn">Buscar</button>
+      </div>
+      <div class="results" id="results"></div>
+      <div class="manual-link"><button id="manualBtn">¿No lo encuentras? Añadir manualmente</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail / edit modal -->
+<div class="overlay" id="detailOverlay" style="display:none">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="detailModalTitle">Editar</h2>
+      <button id="closeDetail">✕</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
