@@ -56,21 +56,39 @@ Si en el futuro cualquiera de las dos vuelve a fallar, el patrón a seguir es el
 }
 ```
 
-## Pendiente: sincronización entre dispositivos
+## Sincronización entre dispositivos — EN PROGRESO (Supabase)
 
-**Problema**: `localStorage` es por navegador/dispositivo. GitHub Pages es solo hosting estático, no tiene backend propio. Por eso el celular y la compu no comparten datos.
+Se decidió ir directo por la opción Supabase (backend gratuito hosteado, la app se sigue sirviendo estática desde GitHub Pages). Estado exacto al cortar:
 
-**Opciones evaluadas** (de más simple a más completa):
+### Archivos
+- La app ahora vive en `estante/` con `index.html`, `styles.css`, `app.js` (ya no existe `biblioteca.html`, fue reemplazado — commit ya pusheado a `main`).
+- El código de Supabase (cliente, mapeo de filas, login, CRUD) **ya está escrito en `app.js` e `index.html`**, pero commiteado solo LOCALMENTE, no pusheado — el login todavía no es funcional (ver bloqueo abajo), así que no se subió para no romper la versión pública.
 
-1. **Exportar/Importar manual** — botones para descargar/cargar un `.json` con toda la biblioteca. Cero infraestructura nueva, pero sincronización manual (hay que pasar el archivo a mano cada vez).
-2. **Backend gratuito (Firebase o Supabase)** — base de datos en la nube pensada para apps solo-frontend. Requiere: cuenta gratuita, autenticación simple (email o anónima con código propio), reglas de seguridad para que solo el dueño lea/escriba sus datos, y cambiar `loadLibrary()`/`saveLibrary()` para hablar con ese servicio en vez de `localStorage`. **Recomendada** para este caso: sincroniza en tiempo real, plan gratuito de sobra, la app sigue siendo estática y se puede seguir hosteando en GitHub Pages.
-3. **Gist privado de GitHub como "base de datos"** — guardar el JSON en un Gist privado y leer/escribir vía la API de GitHub con un token personal (permisos limitados solo a Gists). No suma servicios nuevos, pero hay que manejar el token con cuidado y no sincroniza en tiempo real (hay que refrescar).
-4. **Servidor propio + base de datos** (Node/Python en Render, Railway, etc.) — más esfuerzo del necesario para este caso de uso personal.
+### Proyecto Supabase
+- URL: `https://asevcnpqptmncjewekry.supabase.co`
+- Publishable (anon) key ya está hardcodeada en `app.js` (es pública/segura de exponer en cliente, no es la `service_role`).
+- **Falta correr el SQL** que crea la tabla `items` + políticas RLS (por usuario, vía `auth.uid()`). El bloque SQL completo se le pasó al usuario en el chat — si no se corrió todavía, hay que volver a generarlo o buscarlo en el historial de esta conversación antes de continuar. Sin esta tabla, cualquier login que funcione no va a poder leer/guardar libros.
 
-**Decisión sugerida**: implementar la opción 2 (Firebase o Supabase) cuando se retome el proyecto, salvo que se prefiera algo más rápido de armar (en ese caso, opción 1 como parche temporal).
+### Login: por qué es OTP de 6 dígitos y no magic link
+- Se implementó primero con magic link (click en el mail) pero falló con `otp_expired` — Gmail escanea/pre-visita los links de seguridad y gasta el token de un solo uso antes de que el usuario lo clickee. Es un problema conocido de Supabase + Gmail.
+- Se cambió el flujo a **código de 6 dígitos escrito a mano** (`signInWithOtp` + `verifyOtp` con `type: 'email'`), inmune a ese problema. El HTML ya tiene el segundo form (`#codeForm`) y el JS ya maneja los dos pasos.
+
+### Bloqueo actual: falta SMTP propio
+- Supabase no deja editar las plantillas de email (necesario para agregar `{{ .Token }}`, que es lo que muestra el código de 6 dígitos en el mail) sin conectar un proveedor SMTP propio — el servicio de email interno de Supabase es solo para pruebas.
+- Se eligió **Resend** (gratis, sin tarjeta, dominio de pruebas `onboarding@resend.dev` que no requiere verificar dominio propio).
+- Pasos pendientes en Resend + Supabase:
+  1. Crear cuenta en resend.com y generar una API key (`re_...`).
+  2. En Supabase: **Project Settings → Authentication → SMTP Settings** → activar "Enable Custom SMTP" con host `smtp.resend.com`, puerto `465`, usuario `resend`, password = la API key de Resend, sender `onboarding@resend.dev`.
+  3. En Supabase: **Authentication → Email Templates → Magic Link** → agregar `{{ .Token }}` en el cuerpo del mail (ej. "Tu código de acceso es: {{ .Token }}") y guardar.
+  4. Ya con eso, probar el login end-to-end: pedir código, revisar mail de `holaferfi@gmail.com`, ingresar el código de 6 dígitos en la app.
+
+### También pendiente (config de auth, ya explicada al usuario, no confirmado si se hizo)
+- En Supabase → Authentication → URL Configuration: Site URL = `https://fer-lo.github.io/estante/`, y agregar `http://localhost:8934/*` a Redirect URLs (para poder seguir probando en local). Esto ya no es estrictamente necesario para el flujo de código de 6 dígitos (no depende de redirect), pero no está de más tenerlo configurado.
 
 ## Siguiente paso al retomar con Claude Code
 
-1. Confirmar si se quiere ir directo a Supabase/Firebase o primero un export/import manual como solución rápida.
-2. Si es Supabase/Firebase: crear proyecto, definir tabla/colección `items` con el modelo de datos de arriba, activar autenticación simple, y reemplazar las funciones `loadLibrary()` / `saveLibrary()` del archivo `biblioteca.html` por llamadas a esa API, agregando una pantalla mínima de login.
-3. Mantener el resto de la app (UI, búsqueda, lomos) sin cambios — solo cambia de dónde se lee/escribe la biblioteca.
+1. Confirmar si se corrió el SQL de la tabla `items` (si no, correrlo — está en el historial de esta conversación).
+2. Terminar de conectar Resend como SMTP en Supabase y agregar `{{ .Token }}` al template de Magic Link.
+3. Probar el login completo en local (`python3 -m http.server` en `estante/` + navegador) con `holaferfi@gmail.com`.
+4. Una vez que el login y el guardado/lectura de libros funcionen end-to-end, pushear los cambios de `app.js`/`index.html`/`styles.css` que ya están commiteados localmente (o hacer un nuevo commit si hay más cambios).
+5. Mantener el resto de la app (UI, búsqueda, lomos) sin cambios — solo cambió de dónde se lee/escribe la biblioteca.

@@ -15,6 +15,10 @@
     <h1>Mi Estante</h1>
     <span class="tag">registro de lectura</span>
   </div>
+  <div class="account" id="account" style="display:none">
+    <span id="userEmail"></span>
+    <button id="logoutBtn">Salir</button>
+  </div>
   <div class="ledger" id="ledger"></div>
 </header>
 
@@ -80,6 +84,39 @@
   </div>
 </div>
 
+<!-- Auth gate -->
+<div class="overlay" id="authOverlay" style="display:flex">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-head">
+      <h2>Mi Estante</h2>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--muted); font-size:13.5px; margin:0 0 16px;">Ingresá tu email para recibir un código de acceso a tu biblioteca.</p>
+      <form id="loginForm" class="form-grid">
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="loginEmail" required placeholder="vos@ejemplo.com">
+        </div>
+        <div class="form-actions">
+          <span id="loginMsg" style="color:var(--muted); font-size:12.5px;"></span>
+          <button type="submit" class="save-btn">Enviar código</button>
+        </div>
+      </form>
+      <form id="codeForm" class="form-grid" style="display:none; margin-top:14px;">
+        <div class="field">
+          <label>Código de 6 dígitos</label>
+          <input type="text" id="loginCode" inputmode="numeric" maxlength="6" placeholder="123456">
+        </div>
+        <div class="form-actions">
+          <span id="codeMsg" style="color:var(--muted); font-size:12.5px;"></span>
+          <button type="submit" class="save-btn">Verificar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="app.js"></script>
 </body>
 </html>

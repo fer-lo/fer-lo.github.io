@@ -1,23 +1,91 @@
-const STORAGE_KEY = 'mi-estante-biblioteca-v1';
+const SUPABASE_URL = 'https://asevcnpqptmncjewekry.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_egBAyqSiEsxoPuozUrAbPA_5G3DSr3_';
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 const CAT_LABEL = { libro:'Libro', comic:'Cómic', manga:'Manga' };
 const CAT_UNIT = { libro:'páginas', comic:'números', manga:'capítulos' };
 const STATUS_LABEL = { pendiente:'Pendiente', leyendo:'Leyendo', completado:'Completado', abandonado:'Abandonado' };
 const STATUS_ICON = { pendiente:'○', leyendo:'●', completado:'✓', abandonado:'×' };
 
-let library = loadLibrary();
+let library = [];
 let state = { cat:'todos', status:'todos', sort:'added-asc' };
 
-function loadLibrary(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  }catch(e){ console.error('Error leyendo almacenamiento', e); return []; }
+function rowToItem(row){
+  return {
+    id: row.id, category: row.category, title: row.title, authors: row.authors,
+    cover: row.cover, description: row.description, year: row.year,
+    total: row.total, current: row.current, status: row.status, rating: row.rating,
+    notes: row.notes, dateAdded: row.date_added, dateFinished: row.date_finished
+  };
 }
-function saveLibrary(){
-  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(library)); }
-  catch(e){ console.error('Error guardando', e); alert('No se pudo guardar. Revisa el almacenamiento del navegador.'); }
+function itemToRow(item){
+  return {
+    category: item.category, title: item.title, authors: item.authors,
+    cover: item.cover, description: item.description, year: item.year,
+    total: item.total, current: item.current, status: item.status, rating: item.rating,
+    notes: item.notes, date_added: item.dateAdded, date_finished: item.dateFinished
+  };
 }
-function uid(){ return 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
+async function loadLibrary(){
+  const { data, error } = await db.from('items').select('*').order('date_added', { ascending: true });
+  if(error){ console.error('Error cargando biblioteca', error); return []; }
+  return data.map(rowToItem);
+}
+
+// ---------- Auth ----------
+let pendingEmail = '';
+function setAuthUI(session){
+  document.getElementById('authOverlay').style.display = session ? 'none' : 'flex';
+  document.getElementById('account').style.display = session ? 'flex' : 'none';
+  if(session){
+    document.getElementById('userEmail').textContent = session.user.email;
+  }else{
+    document.getElementById('loginForm').style.display = 'flex';
+    document.getElementById('codeForm').style.display = 'none';
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginCode').value = '';
+    document.getElementById('loginMsg').textContent = '';
+    document.getElementById('codeMsg').textContent = '';
+  }
+}
+async function refreshAndRender(){
+  library = await loadLibrary();
+  renderAll();
+}
+async function initAuth(){
+  const { data:{ session } } = await db.auth.getSession();
+  setAuthUI(session);
+  if(session) await refreshAndRender();
+  db.auth.onAuthStateChange(async (_event, session)=>{
+    setAuthUI(session);
+    if(session) await refreshAndRender();
+    else { library = []; renderAll(); }
+  });
+}
+document.getElementById('loginForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  const msg = document.getElementById('loginMsg');
+  if(!email) return;
+  msg.textContent = 'Enviando código…';
+  const { error } = await db.auth.signInWithOtp({ email });
+  if(error){ msg.textContent = 'Error: ' + error.message; return; }
+  pendingEmail = email;
+  msg.textContent = '';
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('codeForm').style.display = 'flex';
+  document.getElementById('codeMsg').textContent = 'Revisá tu correo y escribí el código de 6 dígitos.';
+});
+document.getElementById('codeForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const code = document.getElementById('loginCode').value.trim();
+  const msg = document.getElementById('codeMsg');
+  if(!code) return;
+  msg.textContent = 'Verificando…';
+  const { error } = await db.auth.verifyOtp({ email: pendingEmail, token: code, type: 'email' });
+  if(error) msg.textContent = 'Error: ' + error.message;
+});
+document.getElementById('logoutBtn').addEventListener('click', ()=> db.auth.signOut());
 
 // ---------- Rendering ----------
 function renderLedger(){
@@ -254,7 +322,6 @@ async function addFromResult(it, btn){
     total = await fetchOpenLibraryPages(it.workKey);
   }
   const item = {
-    id: uid(),
     category: searchCat,
     title: it.title,
     authors: it.authors,
@@ -269,8 +336,9 @@ async function addFromResult(it, btn){
     dateAdded: Date.now(),
     dateFinished: null
   };
-  library.push(item);
-  saveLibrary();
+  const { data, error } = await db.from('items').insert(itemToRow(item)).select().single();
+  if(error){ console.error(error); alert('No se pudo guardar. Intenta de nuevo.'); return; }
+  library.push(rowToItem(data));
   document.getElementById('searchOverlay').style.display = 'none';
   renderAll();
 }
@@ -305,11 +373,11 @@ function openManualForm(){
     mCat = btn.dataset.cat;
     document.querySelectorAll('#manualCatPicker button').forEach(b=>b.classList.toggle('active', b===btn));
   });
-  document.getElementById('mSave').addEventListener('click', ()=>{
+  document.getElementById('mSave').addEventListener('click', async ()=>{
     const title = document.getElementById('mTitle').value.trim();
     if(!title){ alert('El título es obligatorio.'); return; }
     const item = {
-      id: uid(), category: mCat, title,
+      category: mCat, title,
       authors: document.getElementById('mAuthors').value.trim() || 'Autor desconocido',
       cover: document.getElementById('mCover').value.trim(),
       description: '', year: document.getElementById('mYear').value.trim(),
@@ -317,7 +385,9 @@ function openManualForm(){
       current: 0, status: 'pendiente', rating: 0, notes: '',
       dateAdded: Date.now(), dateFinished: null
     };
-    library.push(item); saveLibrary();
+    const { data, error } = await db.from('items').insert(itemToRow(item)).select().single();
+    if(error){ console.error(error); alert('No se pudo guardar. Intenta de nuevo.'); return; }
+    library.push(rowToItem(data));
     document.getElementById('detailOverlay').style.display = 'none';
     renderAll();
   });
@@ -364,19 +434,21 @@ function openDetail(id){
     rating = Number(s.dataset.n);
     document.querySelectorAll('#dStars span').forEach(sp=> sp.classList.toggle('on', Number(sp.dataset.n)<=rating));
   });
-  document.getElementById('dSave').addEventListener('click', ()=>{
+  document.getElementById('dSave').addEventListener('click', async ()=>{
     item.status = document.getElementById('dStatus').value;
     item.rating = rating;
     item.notes = document.getElementById('dNotes').value;
     if(item.status === 'completado' && !item.dateFinished) item.dateFinished = Date.now();
-    saveLibrary();
+    const { error } = await db.from('items').update(itemToRow(item)).eq('id', item.id);
+    if(error){ console.error(error); alert('No se pudieron guardar los cambios.'); return; }
     document.getElementById('detailOverlay').style.display = 'none';
     renderAll();
   });
-  document.getElementById('dDelete').addEventListener('click', ()=>{
+  document.getElementById('dDelete').addEventListener('click', async ()=>{
     if(!confirm('¿Eliminar este título de tu biblioteca?')) return;
+    const { error } = await db.from('items').delete().eq('id', id);
+    if(error){ console.error(error); alert('No se pudo eliminar.'); return; }
     library = library.filter(i=>i.id!==id);
-    saveLibrary();
     document.getElementById('detailOverlay').style.display = 'none';
     renderAll();
   });
@@ -392,4 +464,4 @@ document.getElementById('detailOverlay').addEventListener('click', e=>{
   if(e.target.id === 'detailOverlay') e.target.style.display = 'none';
 });
 
-renderAll();
+initAuth();
