@@ -218,6 +218,8 @@
   .delete-btn:hover{ text-decoration:underline; }
 
   @media (max-width: 640px){
-    header{ padding:20px; } .shelf-wrap, .toolbar, nav.tabs{ padding-left:20px; padding-right:20px; }
-    .ledger{ gap:14px; } .ledger div{ padding-right:12px; }
+    header{ padding:20px; }
+    .shelf-wrap, .toolbar, nav.tabs{ padding-left:20px; padding-right:20px; }
+    .ledger{ gap:14px; }
+    .ledger div{ padding-right:12px; }
   }
