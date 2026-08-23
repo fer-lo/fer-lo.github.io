@@ -1,0 +1,38 @@
+name: Build & deploy estante-react
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'estante-react-app/**'
+      - '.github/workflows/deploy-estante-react.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        working-directory: estante-react-app
+        run: npm ci
+
+      - name: Build
+        working-directory: estante-react-app
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://asevcnpqptmncjewekry.supabase.co
+          VITE_SUPABASE_ANON_KEY: sb_publishable_egBAyqSiEsxoPuozUrAbPA_5G3DSr3_
+
+      - name: Commit built site
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Deploy estante-react [skip ci]"
+          file_pattern: estante-react/
