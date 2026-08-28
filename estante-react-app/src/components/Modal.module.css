@@ -1,0 +1,42 @@
+.overlay{
+  position:fixed; inset:0; background:rgba(8,10,8,0.72); backdrop-filter: blur(2px);
+  display:flex; align-items:center; justify-content:center; z-index:50; padding:20px;
+}
+.modal{
+  background:var(--surface); border-radius:10px; max-width:560px; width:100%; max-height:88vh; overflow-y:auto;
+  box-shadow: var(--shadow); border:1px solid rgba(255,255,255,0.06);
+}
+.head{
+  display:flex; align-items:center; justify-content:space-between; padding:18px 22px;
+  border-bottom:1px solid rgba(255,255,255,0.06); position:sticky; top:0; background:var(--surface); z-index:2;
+}
+.head h2{ font-size:19px; margin:0; }
+.closeBtn{ font-size:20px; color:var(--muted); line-height:1; padding:4px; }
+.closeBtn:hover{ color:var(--paper); }
+.body{ padding: 20px 22px 26px; }
+
+/* Shared form primitives, used by every modal that renders a form */
+.formGrid{ display:flex; flex-direction:column; gap:14px; }
+.field label{ display:block; font-size:12px; color:var(--muted); margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px; }
+.field input, .field textarea, .field select{
+  width:100%; background:var(--surface-2); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:var(--ink);
+  padding:9px 11px; font-size:14px; resize:vertical;
+}
+.actions{ display:flex; justify-content:space-between; margin-top:20px; align-items:center; }
+.saveBtn{ background:var(--brass); color:#1b1608; font-weight:600; padding:9px 20px; border-radius:6px; font-size:13.5px; }
+.saveBtn:hover{ background:#dbb52f; }
+.deleteBtn{ color:var(--danger); font-size:12.5px; }
+.deleteBtn:hover{ text-decoration:underline; }
+.linkBtn{ color:var(--muted); font-size:12.5px; text-decoration:underline; }
+.linkBtn:hover{ color:var(--brass); }
+.note{ color:var(--muted); font-size:12.5px; }
+
+/* Category picker: shared by AddModal's search view and its manual form */
+.catPicker{ display:flex; gap:8px; margin-bottom:16px; }
+.catPicker button{
+  flex:1; padding:9px; border-radius:6px; font-size:13px; font-weight:500; background:var(--surface-2); color:var(--muted);
+  border:1px solid transparent;
+}
+.catLibro.active{ border-color:var(--libro); color:var(--libro); background:rgba(91,124,153,0.12); }
+.catComic.active{ border-color:var(--comic); color:var(--comic); background:rgba(201,84,44,0.12); }
+.catManga.active{ border-color:var(--manga); color:var(--manga); background:rgba(138,79,125,0.12); }

@@ -1,4 +1,5 @@
 import { Spine } from './Spine';
+import styles from './Shelf.module.css';
 import { CAT_LABEL } from '../lib/spineMath';
 
 export function Shelf({ library, cat, status, sort, onSpineClick, onEmptyAdd }) {
@@ -13,10 +14,10 @@ export function Shelf({ library, cat, status, sort, onSpineClick, onEmptyAdd }) 
   if (items.length === 0) {
     const label = cat === 'todos' ? 'título' : CAT_LABEL[cat].toLowerCase();
     return (
-      <div className="shelf-wrap">
-        <div className="shelf">
-          <div className="empty-shelf">
-            <div className="display">Este estante está vacío</div>
+      <div className={styles.wrap}>
+        <div className={styles.shelf}>
+          <div className={styles.empty}>
+            <div className={styles.emptyTitle}>Este estante está vacío</div>
             <div>Busca tu primer {label} para empezar a llenarlo.</div>
             <button onClick={onEmptyAdd}>+ Añadir {label}</button>
           </div>
@@ -26,8 +27,8 @@ export function Shelf({ library, cat, status, sort, onSpineClick, onEmptyAdd }) 
   }
 
   return (
-    <div className="shelf-wrap">
-      <div className="shelf">
+    <div className={styles.wrap}>
+      <div className={styles.shelf}>
         {items.map((item) => (
           <Spine key={item.id} item={item} onClick={() => onSpineClick(item.id)} />
         ))}

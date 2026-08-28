@@ -1,0 +1,22 @@
+.toolbar{
+  background:var(--surface); padding:14px 32px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+}
+.chips{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{
+  font-size:12.5px; padding:6px 12px; border-radius:20px; background:var(--surface-2); color:var(--muted);
+  border:1px solid transparent;
+}
+.chip.active{ background: rgba(201,162,39,0.15); color:var(--brass); border-color: var(--brass-dim); }
+.toolbar select{
+  background:var(--surface-2); color:var(--ink); border:1px solid rgba(255,255,255,0.08); border-radius:6px;
+  padding:6px 10px; font-size:12.5px; margin-left:auto;
+}
+.addBtn{
+  background:var(--brass); color:#1b1608; font-weight:600; font-size:13.5px; padding:9px 16px;
+  border-radius:6px; display:flex; align-items:center; gap:6px;
+}
+.addBtn:hover{ background:#dbb52f; }
+
+@media (max-width: 640px){
+  .toolbar{ padding-left:20px; padding-right:20px; }
+}

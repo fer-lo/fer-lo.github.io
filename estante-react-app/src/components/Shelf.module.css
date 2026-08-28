@@ -1,0 +1,54 @@
+.wrap{ padding: 30px 32px 60px; }
+.shelf{
+  display:flex; flex-wrap:wrap; align-items:flex-start; gap:6px;
+  padding: 0 0 14px 0;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0px, transparent 230px,
+    var(--wood-light) 230px, var(--wood) 232px, var(--wood) 236px, transparent 236px
+  );
+  background-size: 100% 236px;
+}
+.slot{
+  height:230px; width:auto; flex:0 0 auto;
+  display:flex; align-items:flex-end; justify-content:center;
+}
+.spine{
+  width:48px; border-radius:3px 3px 0 0;
+  display:flex; flex-direction:column; align-items:center;
+  padding: 10px 6px 12px;
+  box-shadow: inset -3px 0 6px rgba(0,0,0,0.25), inset 3px 0 6px rgba(255,255,255,0.06), var(--shadow);
+  position:relative; transition: transform .15s ease;
+}
+.spine:hover{ transform: translateY(-6px); }
+.band{ width:100%; height:3px; background:rgba(255,255,255,0.35); margin-bottom:8px; border-radius:2px; }
+.bandBottom{ margin-bottom:0; margin-top:8px; }
+.title{
+  writing-mode: vertical-rl; transform:rotate(180deg);
+  font-family:'Fraunces', serif; font-weight:600; font-size:13px; line-height:1.25;
+  flex:1; text-align:center; color:rgba(255,255,255,0.95);
+  overflow:hidden; display:flex; align-items:center; justify-content:center;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+.statusMark{
+  position:absolute; top:-8px; right:-4px; width:16px; height:16px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; font-size:10px; box-shadow:0 2px 4px rgba(0,0,0,0.4);
+}
+.libro{ background: linear-gradient(100deg, var(--libro), var(--libro-d)); }
+.comic{ background: linear-gradient(100deg, var(--comic), var(--comic-d)); }
+.manga{ background: linear-gradient(100deg, var(--manga), var(--manga-d)); }
+.abandonado{ filter: saturate(0.35) brightness(0.75); }
+
+.empty{
+  width:100%; text-align:center; padding: 60px 20px; color:var(--muted);
+}
+.emptyTitle{ font-family:'Fraunces', serif; font-size:20px; color:var(--paper); margin-bottom:8px; }
+.empty button{
+  margin-top:16px; background:var(--surface-2); color:var(--paper); padding:9px 18px; border-radius:6px;
+  border:1px solid rgba(255,255,255,0.1); font-size:13.5px;
+}
+.empty button:hover{ border-color: var(--brass); color:var(--brass); }
+
+@media (max-width: 640px){
+  .wrap{ padding-left:20px; padding-right:20px; }
+}

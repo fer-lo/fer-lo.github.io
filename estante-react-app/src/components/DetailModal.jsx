@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Modal, modalStyles as s } from './Modal';
+import styles from './DetailModal.module.css';
 import { CAT_LABEL, STATUS_LABEL } from '../lib/spineMath';
 
 export function DetailModal({ item, onClose, onSave, onDelete }) {
@@ -22,49 +24,41 @@ export function DetailModal({ item, onClose, onSave, onDelete }) {
   }
 
   return (
-    <div className="overlay">
-      <div className="modal">
-        <div className="modal-head">
-          <h2>{CAT_LABEL[item.category]}</h2>
-          <button onClick={onClose}>✕</button>
-        </div>
-        <div className="modal-body">
-          <div className="detail-top">
-            <img className="detail-cover" src={item.cover || ''} onError={(e) => { e.target.style.visibility = 'hidden'; }} />
-            <div className="dt-meta">
-              <h3>{item.title}</h3>
-              <div className="authors">{item.authors} {item.year ? '· ' + item.year : ''}</div>
-              <div className="desc">{(item.description || '').slice(0, 300) || 'Sin descripción.'}</div>
-            </div>
-          </div>
-          <div className="form-grid">
-            <div className="field">
-              <label>Estado</label>
-              <select value={status} onChange={(e) => setStatus(e.target.value)}>
-                {Object.keys(STATUS_LABEL).map((s) => (
-                  <option key={s} value={s}>{STATUS_LABEL[s]}</option>
-                ))}
-              </select>
-            </div>
-            <div className="field">
-              <label>Valoración</label>
-              <div className="stars">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <span key={n} className={n <= rating ? 'on' : ''} onClick={() => setRating(n)}>★</span>
-                ))}
-              </div>
-            </div>
-            <div className="field">
-              <label>Notas</label>
-              <textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
-            </div>
-            <div className="form-actions">
-              <button className="delete-btn" onClick={handleDelete}>Eliminar</button>
-              <button className="save-btn" onClick={handleSave}>Guardar cambios</button>
-            </div>
-          </div>
+    <Modal title={CAT_LABEL[item.category]} onClose={onClose}>
+      <div className={styles.top}>
+        <img className={styles.cover} src={item.cover || ''} onError={(e) => { e.target.style.visibility = 'hidden'; }} />
+        <div className={styles.meta}>
+          <h3>{item.title}</h3>
+          <div className={styles.authors}>{item.authors} {item.year ? '· ' + item.year : ''}</div>
+          <div className={styles.desc}>{(item.description || '').slice(0, 300) || 'Sin descripción.'}</div>
         </div>
       </div>
-    </div>
+      <div className={s.formGrid}>
+        <div className={s.field}>
+          <label>Estado</label>
+          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+            {Object.keys(STATUS_LABEL).map((st) => (
+              <option key={st} value={st}>{STATUS_LABEL[st]}</option>
+            ))}
+          </select>
+        </div>
+        <div className={s.field}>
+          <label>Valoración</label>
+          <div className={styles.stars}>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <span key={n} className={n <= rating ? styles.on : ''} onClick={() => setRating(n)}>★</span>
+            ))}
+          </div>
+        </div>
+        <div className={s.field}>
+          <label>Notas</label>
+          <textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+        </div>
+        <div className={s.actions}>
+          <button className={s.deleteBtn} onClick={handleDelete}>Eliminar</button>
+          <button className={s.saveBtn} onClick={handleSave}>Guardar cambios</button>
+        </div>
+      </div>
+    </Modal>
   );
 }

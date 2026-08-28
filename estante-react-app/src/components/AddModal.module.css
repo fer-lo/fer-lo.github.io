@@ -1,0 +1,21 @@
+.searchRow{ display:flex; gap:8px; margin-bottom:16px; }
+.searchRow input{
+  flex:1; background:var(--surface-2); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:var(--ink);
+  padding:10px 12px; font-size:14px;
+}
+.searchRow button{ background:var(--brass); color:#1b1608; font-weight:600; padding:0 16px; border-radius:6px; }
+.results{ display:flex; flex-direction:column; gap:10px; min-height:40px; }
+.resultItem{
+  display:flex; gap:12px; padding:10px; background:var(--surface-2); border-radius:8px; align-items:center;
+}
+.resultItem img{ width:44px; height:64px; object-fit:cover; border-radius:3px; background:#333; flex-shrink:0; }
+.info{ flex:1; min-width:0; }
+.title{ font-weight:600; font-size:14px; margin-bottom:2px; }
+.metaLine{ font-size:12px; color:var(--muted); }
+.addBtn{
+  background:none; border:1px solid var(--brass-dim); color:var(--brass); font-size:12px; padding:6px 10px;
+  border-radius:5px; flex-shrink:0;
+}
+.addBtn:hover{ background:rgba(201,162,39,0.12); }
+.hint{ color:var(--muted); font-size:12.5px; text-align:center; padding:14px 0; }
+.manualLink{ text-align:center; margin-top:14px; }

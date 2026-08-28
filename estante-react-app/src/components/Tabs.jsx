@@ -1,3 +1,5 @@
+import styles from './Tabs.module.css';
+
 const CATS = [
   { value: 'todos', label: 'Todo', color: 'var(--brass)' },
   { value: 'libro', label: 'Libros', color: 'var(--libro)' },
@@ -7,14 +9,14 @@ const CATS = [
 
 export function Tabs({ cat, onChange }) {
   return (
-    <nav className="tabs">
+    <nav className={styles.tabs}>
       {CATS.map((c) => (
         <button
           key={c.value}
-          className={cat === c.value ? 'active' : ''}
+          className={cat === c.value ? styles.active : ''}
           onClick={() => onChange(c.value)}
         >
-          <span className="dot" style={{ background: c.color }} />
+          <span className={styles.dot} style={{ background: c.color }} />
           {c.label}
         </button>
       ))}

@@ -1,0 +1,9 @@
+.top{ display:flex; gap:16px; margin-bottom:18px; }
+.cover{ width:110px; height:158px; object-fit:cover; border-radius:6px; box-shadow:var(--shadow); flex-shrink:0; background:#333; }
+.meta{ flex:1; min-width:0; }
+.meta h3{ margin:0 0 4px; font-size:19px; }
+.authors{ color:var(--muted); font-size:13px; margin-bottom:8px; }
+.desc{ font-size:12.8px; color:var(--muted); max-height:90px; overflow-y:auto; line-height:1.45; }
+.stars{ display:flex; gap:4px; font-size:22px; }
+.stars span{ color: rgba(255,255,255,0.2); cursor:pointer; }
+.stars span.on{ color:var(--brass); }

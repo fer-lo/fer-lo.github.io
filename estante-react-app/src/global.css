@@ -1,0 +1,38 @@
+:root{
+  --bg: #16211B;
+  --surface: #1F2E24;
+  --surface-2: #26362B;
+  --wood: #5C3B22;
+  --wood-light: #7A4E2C;
+  --brass: #C9A227;
+  --brass-dim: #8C7220;
+  --paper: #EDE6D6;
+  --ink: #E8E4D9;
+  --muted: #8FA396;
+  --libro: #5B7C99;
+  --libro-d: #3E5A73;
+  --comic: #C9542C;
+  --comic-d: #9C3F20;
+  --manga: #8A4F7D;
+  --manga-d: #663A5D;
+  --danger: #B0463C;
+  --ok: #6E9B6B;
+  --radius: 6px;
+  --shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; }
+body{
+  background: var(--bg);
+  background-image: radial-gradient(ellipse at top, rgba(255,255,255,0.03), transparent 60%);
+  color: var(--ink);
+  font-family: 'Inter', sans-serif;
+  min-height:100vh;
+}
+h1,h2,h3{ font-family:'Fraunces', serif; }
+::selection{ background: var(--brass-dim); color:#111; }
+:focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce){ *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; } }
+
+button{ font-family:inherit; cursor:pointer; border:none; background:none; color:inherit; }
+input, textarea, select{ font-family:inherit; }

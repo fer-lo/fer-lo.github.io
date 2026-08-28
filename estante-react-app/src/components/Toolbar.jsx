@@ -1,3 +1,5 @@
+import styles from './Toolbar.module.css';
+
 const STATUSES = [
   { value: 'todos', label: 'Todos' },
   { value: 'leyendo', label: 'Leyendo' },
@@ -8,12 +10,12 @@ const STATUSES = [
 
 export function Toolbar({ status, onStatusChange, sort, onSortChange, onAdd }) {
   return (
-    <div className="toolbar">
-      <div className="chips">
+    <div className={styles.toolbar}>
+      <div className={styles.chips}>
         {STATUSES.map((s) => (
           <button
             key={s.value}
-            className={'chip' + (status === s.value ? ' active' : '')}
+            className={`${styles.chip} ${status === s.value ? styles.active : ''}`}
             onClick={() => onStatusChange(s.value)}
           >
             {s.label}
@@ -26,7 +28,7 @@ export function Toolbar({ status, onStatusChange, sort, onSortChange, onAdd }) {
         <option value="title">Título (A-Z)</option>
         <option value="rating">Valoración</option>
       </select>
-      <button className="add-btn" onClick={onAdd}>+ Añadir</button>
+      <button className={styles.addBtn} onClick={onAdd}>+ Añadir</button>
     </div>
   );
 }
