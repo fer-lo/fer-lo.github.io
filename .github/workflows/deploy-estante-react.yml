@@ -28,6 +28,7 @@ jobs:
         working-directory: estante-react-app
         run: npm run build
         env:
+          BUILD_OUT_DIR: ../estante-react
           VITE_SUPABASE_URL: https://asevcnpqptmncjewekry.supabase.co
           VITE_SUPABASE_ANON_KEY: sb_publishable_egBAyqSiEsxoPuozUrAbPA_5G3DSr3_
 

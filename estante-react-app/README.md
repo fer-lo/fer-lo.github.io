@@ -18,7 +18,7 @@ VITE_SUPABASE_URL=https://asevcnpqptmncjewekry.supabase.co
 VITE_SUPABASE_ANON_KEY=sb_publishable_...
 ```
 
-`npm run build` compila hacia `../estante-react` (configurado en `vite.config.js`, `build.outDir`), no hacia un `dist/` local.
+`npm run build` compila hacia `dist/` (ignorado por git) — sirve para verificar que compila sin tocar la carpeta publicada. Solo CI escribe el sitio real, pasando `BUILD_OUT_DIR=../estante-react` (ver `vite.config.js`).
 
 ## Estado (2026-08-23)
 
@@ -33,7 +33,8 @@ Migración funcional **completa y probada end-to-end**: login (email+contraseña
 - `src/components/` — `AuthGate`, `Header`, `Tabs`, `Toolbar`, `Shelf` + `Spine`, `AddModal` (búsqueda + alta manual), `DetailModal` (editar/eliminar).
 
 ### Deploy
-- Workflow: `.github/workflows/deploy-estante-react.yml` — en cada push a `main` que toque `estante-react-app/**`, instala dependencias, corre `npm run build` (con las env vars de Supabase inline en el workflow — son la `anon key` pública, no secretas) y commitea el resultado en `../estante-react/` con `stefanzweifel/git-auto-commit-action`.
+- Workflow: `.github/workflows/deploy-estante-react.yml` — en cada push a `main` que toque `estante-react-app/**`, instala dependencias, corre `npm run build` con `BUILD_OUT_DIR=../estante-react` (más las env vars de Supabase inline en el workflow — son la `anon key` pública, no secretas) y commitea el resultado con `stefanzweifel/git-auto-commit-action`.
+- Solo CI escribe `estante-react/`. Los builds locales van a `dist/` (ignorado por git), así que verificar que compila nunca ensucia el working tree ni pisa lo que deployó el bot.
 - GitHub Pages sigue sirviendo todo el repo desde la raíz de `main` (configuración sin cambios) — `estante-react/` es simplemente una carpeta más que Pages sirve tal cual, igual que `estante/`.
 - `vite.config.js` tiene `base: './'` (rutas relativas) para que funcione sin importar el subpath.
 

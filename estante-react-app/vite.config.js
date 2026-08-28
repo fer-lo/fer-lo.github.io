@@ -6,7 +6,9 @@ export default defineConfig({
   base: './',
   plugins: [react()],
   build: {
-    outDir: '../estante-react',
+    // Local builds go to dist/ (gitignored) so they never touch the deployed
+    // folder; CI overrides this to write the published site instead.
+    outDir: process.env.BUILD_OUT_DIR || 'dist',
     emptyOutDir: true,
   },
 })
