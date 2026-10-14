@@ -4,12 +4,14 @@ import styles from './DetailModal.module.css';
 import { CAT_LABEL, STATUS_LABEL } from '../lib/spineMath';
 
 export function DetailModal({ item, onClose, onSave, onDelete }) {
+  const [title, setTitle] = useState(item.title);
   const [status, setStatus] = useState(item.status);
-  const [rating, setRating] = useState(item.rating || 0);
   const [notes, setNotes] = useState(item.notes || '');
 
   async function handleSave() {
-    const updated = { ...item, status, rating, notes };
+    const cleanTitle = title.trim();
+    if (!cleanTitle) { alert('El título no puede quedar vacío.'); return; }
+    const updated = { ...item, title: cleanTitle, status, notes };
     if (status === 'completado' && !item.dateFinished) updated.dateFinished = Date.now();
     const { error } = await onSave(updated);
     if (error) { alert('No se pudieron guardar los cambios.'); return; }
@@ -28,7 +30,12 @@ export function DetailModal({ item, onClose, onSave, onDelete }) {
       <div className={styles.top}>
         <img className={styles.cover} src={item.cover || ''} onError={(e) => { e.target.style.visibility = 'hidden'; }} />
         <div className={styles.meta}>
-          <h3>{item.title}</h3>
+          <input
+            className={styles.titleInput}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            aria-label="Título"
+          />
           <div className={styles.authors}>{item.authors} {item.year ? '· ' + item.year : ''}</div>
           <div className={styles.desc}>{(item.description || '').slice(0, 300) || 'Sin descripción.'}</div>
         </div>
@@ -41,14 +48,6 @@ export function DetailModal({ item, onClose, onSave, onDelete }) {
               <option key={st} value={st}>{STATUS_LABEL[st]}</option>
             ))}
           </select>
-        </div>
-        <div className={s.field}>
-          <label>Valoración</label>
-          <div className={styles.stars}>
-            {[1, 2, 3, 4, 5].map((n) => (
-              <span key={n} className={n <= rating ? styles.on : ''} onClick={() => setRating(n)}>★</span>
-            ))}
-          </div>
         </div>
         <div className={s.field}>
           <label>Notas</label>

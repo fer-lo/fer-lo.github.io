@@ -26,7 +26,6 @@ export function Toolbar({ status, onStatusChange, sort, onSortChange, onAdd }) {
         <option value="added-asc">Orden de agregado</option>
         <option value="recent">Añadido recientemente</option>
         <option value="title">Título (A-Z)</option>
-        <option value="rating">Valoración</option>
       </select>
       <button className={styles.addBtn} onClick={onAdd}>+ Añadir</button>
     </div>

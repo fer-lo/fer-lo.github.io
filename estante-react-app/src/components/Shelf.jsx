@@ -7,7 +7,6 @@ export function Shelf({ library, cat, status, sort, onSpineClick, onEmptyAdd }) 
   if (status !== 'todos') items = items.filter((i) => i.status === status);
 
   if (sort === 'title') items.sort((a, b) => a.title.localeCompare(b.title));
-  else if (sort === 'rating') items.sort((a, b) => (b.rating || 0) - (a.rating || 0));
   else if (sort === 'added-asc') items.sort((a, b) => a.dateAdded - b.dateAdded);
   else items.sort((a, b) => b.dateAdded - a.dateAdded);
 
